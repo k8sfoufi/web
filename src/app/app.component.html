@@ -1,0 +1,73 @@
+<main class="page">
+  <header class="head">
+    <h1>Todo list</h1>
+    <p class="count" aria-live="polite">{{ pending() }} to do</p>
+  </header>
+
+  @if (error()) {
+    <p class="alert" role="alert">{{ error() }}</p>
+  }
+  @if (lookupsError()) {
+    <p class="alert" role="alert">
+      {{ lookupsError() }}
+      <button type="button" class="link" (click)="loadLookups()">Try again</button>
+    </p>
+  }
+
+  <form class="add" (ngSubmit)="add()">
+    <label class="sr-only" for="title">New todo</label>
+    <input id="title" name="title" [(ngModel)]="title" maxlength="200" autocomplete="off"
+           placeholder="What needs to be done?" />
+
+    <label class="sr-only" for="category">Category</label>
+    <select id="category" name="category" [(ngModel)]="categoryId">
+      @for (c of lookups()?.categories ?? []; track c.id) {
+        <option [ngValue]="c.id">{{ c.name }}</option>
+      }
+    </select>
+
+    <label class="sr-only" for="priority">Priority</label>
+    <select id="priority" name="priority" [(ngModel)]="priorityId">
+      @for (p of lookups()?.priorities ?? []; track p.id) {
+        <option [ngValue]="p.id">{{ p.name }}</option>
+      }
+    </select>
+
+    <button type="submit" [disabled]="!canAdd">Add todo</button>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Loading todos…</p>
+  } @else if (todos().length === 0) {
+    <p class="empty">Nothing here yet. Add your first todo above.</p>
+  } @else {
+    <ul class="list">
+      @for (t of todos(); track t.id) {
+        <li class="item" [class.done]="t.isDone">
+          <input type="checkbox" [checked]="t.isDone" (change)="toggle(t)"
+                 [attr.aria-label]="'Mark ' + t.title + (t.isDone ? ' as not done' : ' as done')" />
+          <div class="body">
+            <span class="title">{{ t.title }}</span>
+            <span class="meta">
+              @if (t.categoryName) {
+                <span class="chip" [style.border-color]="t.categoryColor" [style.color]="t.categoryColor">
+                  {{ t.categoryName }}
+                </span>
+              }
+              @if (t.priorityName) {
+                <span class="prio">{{ t.priorityName }} priority</span>
+              }
+              <span class="when">Added {{ t.createdAtUtc | date: 'MMM d, HH:mm' }}</span>
+            </span>
+            @if (t.comment && !t.isDone) {
+              <p class="note">{{ t.comment }}</p>
+            }
+          </div>
+          <button type="button" class="delete" (click)="remove(t)" [attr.aria-label]="'Delete ' + t.title">
+            Delete
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</main>
